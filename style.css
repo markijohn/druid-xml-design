@@ -47,6 +47,7 @@ html,body {
 	background-position: -19px -19px;
 	width : 320px;
 	height : 540px;
+	position: relative;
 }
 
 #preview_iframe {
@@ -57,3 +58,5 @@ html,body {
 	padding : 0;
 	overflow: hidden;
 }
+
+.resizer { width: 10px; height: 10px; background: gray; position:absolute; right: 0; bottom: 0; cursor: se-resize; }

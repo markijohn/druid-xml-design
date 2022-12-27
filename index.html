@@ -12,7 +12,79 @@
 		<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ace-colorpicker@0.0.12/addon/ace-colorpicker.css" /> -->
 		<!-- <script src="https://cdn.jsdelivr.net/npm/ace-colorpicker@0.0.12/addon/ace-colorpicker.min.js" ></script> -->
 
+		<!-- rule for xml implement -->
 		<script type="text/javascript">
+			function MustBe(value) {
+				return (v) => {
+					v == value
+				}
+			}
+
+			function OneMustBeSelected(array) {
+				return (val) => {
+					array.indexOf(val) != -1
+				}
+			}
+
+			var RULES = {
+				flex : {
+					parentables : OneMustBeSelected(["root","flex"]),
+					attrs : {
+						direction : OneMustBeSelected([null,"row", "column"]),
+					},
+					text : MustBe(null)
+				},
+				button : {
+					parentables : ["flex"],
+					attrs : {
+						disabled : false
+					},
+					text : "Button"
+				},
+				label : {
+					parentables : ["flex"],
+					attrs : {
+						disabled : false
+					}
+				}
+			};
+		</script>
+
+		<!-- resizable -->
+		<script>
+			document.addEventListener("DOMContentLoaded", function() {
+				var resizable = document.querySelector('.resizable'),
+				resizer = document.querySelector( '.resizer' ),
+				iframe = document.querySelector( '#preview_iframe' ),
+				startX, startY, startWidth, startHeight;
+				
+				resizer.addEventListener( 'mousedown', initDrag, false );
+
+				function initDrag( e ) {
+					startX = e.clientX;
+					startY = e.clientY;
+					iframe.style.pointerEvents  = 'none';				
+					startWidth = parseInt( document.defaultView.getComputedStyle( resizable ).width, 10);
+					startHeight = parseInt(document.defaultView.getComputedStyle( resizable ).height, 10);
+					document.documentElement.addEventListener('mousemove', doDrag, false);
+					document.documentElement.addEventListener('mouseup', stopDrag, false);
+				}
+
+				function doDrag(e) {
+					resizable.style.width = (startWidth + e.clientX - startX) + 'px';
+					resizable.style.height = (startHeight + e.clientY - startY) + 'px';
+				}
+
+				function stopDrag(e) {
+					iframe.style.pointerEvents  = '';
+					document.documentElement.removeEventListener('mousemove', doDrag, false);    
+					document.documentElement.removeEventListener('mouseup', stopDrag, false);
+				}
+			});
+		</script>
+
+		<!-- editor configuration -->
+		<script>
 			var editor;
 			window.onload = () => {
 				var sizes = localStorage.getItem('split-sizes')
@@ -35,9 +107,9 @@
 				editor.setTheme("ace/theme/monokai");
 				//editor.setTheme("ace/theme/solarized_light");
 
-				// editor.getSession().setMode("ace/mode/xml", () => {
-				// 	AceColorPicker.load(ace, editor);
-				// });
+				editor.getSession().setMode("ace/mode/xml", () => {
+					// AceColorPicker.load(ace, editor);
+				});
 
 				editor.setShowPrintMargin(false);
 				editor.setOptions({
@@ -80,8 +152,9 @@
 		<div class="split">
 			<div id="editor"></div>
 			<div id="preview_background">
-				<div id="preview">
+				<div id="preview" class="resizable">
 					<iframe id="preview_iframe"></iframe>
+					<div class='resizer'>&nbsp;</div>
 				</div>
 			</div>
 		</div>
