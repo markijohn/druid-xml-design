@@ -9,8 +9,8 @@
 		<script type="text/javascript" src="https://ajaxorg.github.io/ace-builds/src/ace.js"></script> 
 		<script type="text/javascript" src="https://ajaxorg.github.io/ace-builds/src/ext-language_tools.js"></script> 
 
-		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ace-colorpicker@0.0.12/addon/ace-colorpicker.css" />
-		<script src="https://cdn.jsdelivr.net/npm/ace-colorpicker@0.0.12/addon/ace-colorpicker.min.js" ></script>
+		<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ace-colorpicker@0.0.12/addon/ace-colorpicker.css" /> -->
+		<!-- <script src="https://cdn.jsdelivr.net/npm/ace-colorpicker@0.0.12/addon/ace-colorpicker.min.js" ></script> -->
 
 		<script type="text/javascript">
 			var editor;
@@ -34,9 +34,11 @@
 				ace.config.set('basePath', 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.14.0')
 				editor.setTheme("ace/theme/monokai");
 				//editor.setTheme("ace/theme/solarized_light");
-				editor.getSession().setMode("ace/mode/xml", () => {
-					AceColorPicker.load(ace, editor);
-				});
+
+				// editor.getSession().setMode("ace/mode/xml", () => {
+				// 	AceColorPicker.load(ace, editor);
+				// });
+
 				editor.setShowPrintMargin(false);
 				editor.setOptions({
 					enableBasicAutocompletion: true,
