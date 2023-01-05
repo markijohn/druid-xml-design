@@ -183,10 +183,16 @@
                         src = '<sc'+'ript type="module" src="druid-tag.js"></sc'+'ript>' + src;
                         src = `<style>
                             html,body {width:100%; height:100%; overflow:hidden}
+                            
                             flex { display:flex }
+                            flex > * {margin:auto;}
+                            flex[direction="column"] { flex-direction:column }
                             custom { display:none }
-                            </style>`
-                        + src;
+                            </style>
+                            <body>
+                            ${src}
+                            </body>
+                            </html>`;
                         let preview = document.querySelector("#preview iframe");
                         preview.srcdoc = src;
                     }
