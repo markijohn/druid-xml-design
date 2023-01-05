@@ -6,49 +6,13 @@
 			@import url(style.css);
 		</style>
 		<script src="https://unpkg.com/split.js/dist/split.min.js"></script>
-		<script type="text/javascript" src="https://ajaxorg.github.io/ace-builds/src/ace.js"></script> 
-		<script type="text/javascript" src="https://ajaxorg.github.io/ace-builds/src/ext-language_tools.js"></script> 
-
-		<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ace-colorpicker@0.0.12/addon/ace-colorpicker.css" /> -->
-		<!-- <script src="https://cdn.jsdelivr.net/npm/ace-colorpicker@0.0.12/addon/ace-colorpicker.min.js" ></script> -->
-
-		<!-- rule for xml implement -->
-		<script type="text/javascript">
-			function MustBe(value) {
-				return (v) => {
-					v == value
-				}
-			}
-
-			function OneMustBeSelected(array) {
-				return (val) => {
-					array.indexOf(val) != -1
-				}
-			}
-
-			var RULES = {
-				flex : {
-					parentables : OneMustBeSelected(["root","flex"]),
-					attrs : {
-						direction : OneMustBeSelected([null,"row", "column"]),
-					},
-					text : MustBe(null)
-				},
-				button : {
-					parentables : ["flex"],
-					attrs : {
-						disabled : false
-					},
-					text : "Button"
-				},
-				label : {
-					parentables : ["flex"],
-					attrs : {
-						disabled : false
-					}
-				}
-			};
-		</script>
+		
+        <link rel="stylesheet" href="codemirror/lib/codemirror.css">
+        <link rel="stylesheet" href="codemirror/addon/hint/show-hint.css">
+        <script src="codemirror/lib/codemirror.js"></script>
+        <script src="codemirror/addon/hint/show-hint.js"></script>
+        <script src="codemirror/addon/hint/xml-hint.js"></script>
+        <script src="codemirror/mode/xml/xml.js"></script>
 
 		<!-- resizable -->
 		<script>
@@ -83,6 +47,18 @@
 			});
 		</script>
 
+        <!-- pick example -->
+        <script>
+            function pickExample() {
+                let item = document.querySelector("#exampleList").value;
+                if(item && item.trim() != "") {
+                    fetch(item)
+                    .then(response => response.text())
+                    .then(text => editor.doc.setValue(text));
+                }
+            }
+        </script>
+
 		<!-- editor configuration -->
 		<script>
 			var editor;
@@ -101,99 +77,157 @@
 						localStorage.setItem('split-sizes', JSON.stringify(sizes))
 					}
 				});
-				editor = ace.edit("editor");
-				ace.require("ace/ext/language_tools.js");
-				ace.config.set('basePath', 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.14.0')
-				editor.setTheme("ace/theme/monokai");
-				//editor.setTheme("ace/theme/solarized_light");
 
-				editor.getSession().setMode("ace/mode/xml", () => {
-					// AceColorPicker.load(ace, editor);
-				});
+                var basic_widget_spec = {
+                    attrs: {
+                    },
+                    children: []
+                };
+                var basic_widgets = ["flex","container","label","button","textbox","checkbox","image","list","scroll","slider","spinner","split","switch","stepper","painter"];
 
-				editor.setShowPrintMargin(false);
-				editor.setOptions({
-					enableBasicAutocompletion: true,
-					// enableBasicAutocompletion: [{
-					// 	getCompletions: (editor, session, pos, prefix, callback) => {
-					// 		// note, won't fire if caret is at a word that does not have these letters
-					// 		callback(null, [
-					// 			{value: 'flex', score: 1, meta: 'Flex layout container'},
-					// 			{value: 'button', score: 1, meta: 'Button'},
-					// 			{value: 'textbox', score: 1, meta: 'Input text box'}
-					// 		]);
-					// 	},
-					// }],
-					enableSnippets: true,
-					enableLiveAutocompletion: true
-				});
-				editor.getSession().on('change', function() {
-					// let replace_tags = ['flex', 'button', 'textbox', 'label'];
-					// let src = editor.getValue();
-					// replace_tags.forEach( tag => {
-					// 	src = src.replaceAll("<"+tag, "<druid-"+tag);
-					// 	src = src.replaceAll("</"+tag, "</druid-"+tag);
-					// });
-					let src = editor.getValue();
-					src = '<sc'+'ript type="module" src="druid-tag.js"></sc'+'ript>' + src;
-					src = `<style>
-						html,body {width:100%; height:100%; overflow:hidden}
-						flex { display:flex }
-						custom { display:none }
-						</style>`
-					 + src;
-					let preview = document.querySelector("#preview iframe");
-					preview.srcdoc = src;
-				});
+                var tags = {
+                    //available top elements
+                    "!top": ["flex","container"],
+
+                    //available common attribute
+                    "!attrs": {
+                        class: null,
+                        id: null,
+                        flex: ["1"],
+                        lens: null
+                    },
+                    flex: {
+                        attrs: {
+                            direction : ["row","column"],
+                            axis_alignment : [],
+                            cross_axis_alignment : []
+                        },
+                        children: ["spacer"].concat(basic_widgets)
+                    },
+                    container: {
+                        attrs: {
+                        },
+                        children: basic_widgets
+                    },
+                    label: basic_widget_spec,
+                    button: basic_widget_spec,
+                    textbox: {
+                        attrs : {
+                            placeholder : null
+                        },
+                        children : []
+                    },
+                    checkbox: basic_widget_spec,
+                    image: basic_widget_spec,
+                    list: basic_widget_spec,
+                    scroll: basic_widget_spec,
+                    slider: basic_widget_spec,
+                    spinner: basic_widget_spec,
+                    split: {
+                        attrs : {
+                            direction : ["row", "column"],
+                            split_point : [0,1],
+                            min_size : ["0.2 , 0.2", "0.5 , 0.5" ],
+                            bar_size : [.1 , 1.],
+                            min_bar_area : [.1 , 1.],
+                            draggable : [true, false],
+                            solid_bar : [true, false]
+                        },
+                        children : basic_widgets
+                    },
+                    stepper: basic_widget_spec,
+                    switch: basic_widget_spec,
+                    painter: basic_widget_spec,
+
+                };
+          
+                function completeAfter(cm, pred) {
+                    var cur = cm.getCursor();
+                    if (!pred || pred()) setTimeout(function() {
+                    if (!cm.state.completionActive)
+                        cm.showHint({completeSingle: false});
+                    }, 100);
+                    return CodeMirror.Pass;
+                }
+          
+                function completeIfAfterLt(cm) {
+                    return completeAfter(cm, function() {
+                        var cur = cm.getCursor();
+                        return cm.getRange(CodeMirror.Pos(cur.line, cur.ch - 1), cur) == "<";
+                    });
+                }
+          
+                function completeIfInTag(cm) {
+                    return completeAfter(cm, function() {
+                    var tok = cm.getTokenAt(cm.getCursor());
+                        if (tok.type == "string" && (!/['"]/.test(tok.string.charAt(tok.string.length - 1)) || tok.string.length == 1)) return false;
+                        var inner = CodeMirror.innerMode(cm.getMode(), tok.state).state;
+                        return inner.tagName;
+                    });
+                }
+           
+                editor = CodeMirror.fromTextArea(document.getElementById("code"), {
+                    mode: "xml",
+                    lineNumbers: true,
+                    extraKeys: {
+                        "'<'": completeAfter,
+                        "'/'": completeIfAfterLt,
+                        "' '": completeIfInTag,
+                        "'='": completeIfInTag,
+                        "Ctrl-Space": "autocomplete"
+                    },
+                    hintOptions: {schemaInfo: tags},
+                });
+                editor.on('change', (inst, change) => {
+                        let src = editor.doc.getValue();
+                        src = '<sc'+'ript type="module" src="druid-tag.js"></sc'+'ript>' + src;
+                        src = `<style>
+                            html,body {width:100%; height:100%; overflow:hidden}
+                            flex { display:flex }
+                            custom { display:none }
+                            </style>`
+                        + src;
+                        let preview = document.querySelector("#preview iframe");
+                        preview.srcdoc = src;
+                    }
+                );
 			}
 		</script>
 	</head>
 	<body>
 		<div class="split">
-			<div id="editor"></div>
+			<div id="editor">
+                <select id="exampleList" onchange="pickExample()">
+                    <option value="">-- SELECT EXAMPLE --</option>
+                    <optgroup label="Basic">
+                        <option value="ex/basic.xml">SIMPLE</option>
+                        <option value="ex/basic_lens.xml">Lens</option>
+                        <option value="ex/basic_style.xml">Style widget</option>
+                        <option value="ex/basic_style_order.xml">Style order</option>
+                    </optgroup>
+                    <optgroup label="Custom Widget">
+                        <option value="ex/custom_widget.xml">Custom widget</option>
+                        <option value="ex/custom_widget_native.rs">Custom widget native</option>
+                    </optgroup>
+                    <optgroup label="Drawable Widget">
+                        <option value="ex/drawable_shapes.xml">Draw shape</option>
+                        <option value="ex/drawable_background.xml">Drawable as background</option>
+                    </optgroup>
+                    <optgroup label="Sample form">
+                        <option value="ex/sample_login.xml">Login form</option>
+                        <option value="ex/sample_input.xml">Input form</option>
+                        <option value="ex/sample_file_explorer.xml">File explore form</option>
+                    </optgroup>
+                </select>
+                <label style="color:lightgray">Ctrl+Space show the hint</label>
+                <textarea id="code" name="code"></textarea>
+            </div>
 			<div id="preview_background">
 				<div id="preview" class="resizable">
 					<iframe id="preview_iframe"></iframe>
 					<div class='resizer'>&nbsp;</div>
 				</div>
 			</div>
-		</div>
-
-
-<!--
-
-<custom map="myWidget1">
-	<flex>
-		<label>${name}</label>
-		<button>${btn}</button>
-	</flex>
-</custom>
-
-<flex map="main">
-    333333
-	<label>MAIN FRAME<label>
-	<myWidget1 name="label name" btn="button name"></myWidget1>
-	<button>1234</button>
-</flex>
-
--->
-
-<!--
-
-<custom map="myWidget1">
-	<div class="d-flex">
-		<label>${name}</label>
-		<button>${btn}</button>
-	</flex>
-</custom>
-
-<flex map="main">
-	<label>MAIN FRAME<label>
-	<myWidget1 name="label name" btn="button name"></myWidget>
-	<myNativeWidget name="label name" btn="button name"></myNativeWidget>
-	<button>1234</button>
-</flex>
--->
-		
+		</div>		
 	</body>
 </html>

@@ -6,6 +6,7 @@ window.customElements.define('druid-flex', class extends HTMLElement {
 
 		//flex container attribute
 		this.style.display = "flex";
+
 		//direction
 		console.log("druid flex direction.. ", this.getAttribute("direction"));
 		this.style.flexDirection = this.getAttribute("direction");
