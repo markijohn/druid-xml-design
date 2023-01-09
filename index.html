@@ -9,38 +9,43 @@
 		
         <link rel="stylesheet" href="codemirror/lib/codemirror.css">
         <link rel="stylesheet" href="codemirror/addon/hint/show-hint.css">
+        <link rel="stylesheet" href="codemirror/addon/lint/lint.css">
         <script src="codemirror/lib/codemirror.js"></script>
         <script src="codemirror/addon/hint/show-hint.js"></script>
         <script src="codemirror/addon/hint/xml-hint.js"></script>
+        <script src="codemirror/addon/lint/lint.js"></script>
         <script src="codemirror/mode/xml/xml.js"></script>
+        <script src="druid_xml.js"></script>
 
 		<!-- resizable -->
 		<script>
 			document.addEventListener("DOMContentLoaded", function() {
-				var resizable = document.querySelector('.resizable'),
-				resizer = document.querySelector( '.resizer' ),
-				iframe = document.querySelector( '#preview_iframe' ),
+				var resizable = document.querySelectorAll('.resizable'),
+				resizer = document.querySelectorAll( '.resizer' ),
+				target = document.querySelectorAll( '.preview' ),
 				startX, startY, startWidth, startHeight;
 				
-				resizer.addEventListener( 'mousedown', initDrag, false );
+                resizer.forEach( e => e.addEventListener( 'mousedown', initDrag, false ) );
 
 				function initDrag( e ) {
 					startX = e.clientX;
 					startY = e.clientY;
-					iframe.style.pointerEvents  = 'none';				
-					startWidth = parseInt( document.defaultView.getComputedStyle( resizable ).width, 10);
-					startHeight = parseInt(document.defaultView.getComputedStyle( resizable ).height, 10);
+                    target.forEach( t => t.style.pointerEvents = 'none' );
+					startWidth = parseInt( document.defaultView.getComputedStyle( target[0] ).width, 10);
+					startHeight = parseInt(document.defaultView.getComputedStyle( target[0] ).height, 10);
 					document.documentElement.addEventListener('mousemove', doDrag, false);
 					document.documentElement.addEventListener('mouseup', stopDrag, false);
 				}
 
 				function doDrag(e) {
-					resizable.style.width = (startWidth + e.clientX - startX) + 'px';
-					resizable.style.height = (startHeight + e.clientY - startY) + 'px';
+                    target.forEach( t => {
+                        t.style.width = (startWidth + e.clientX - startX) + 'px';
+					    t.style.height = (startHeight + e.clientY - startY) + 'px';
+                    })
 				}
 
 				function stopDrag(e) {
-					iframe.style.pointerEvents  = '';
+                    target.forEach( t => t.style.pointerEvents = '' );
 					document.documentElement.removeEventListener('mousemove', doDrag, false);    
 					document.documentElement.removeEventListener('mouseup', stopDrag, false);
 				}
@@ -61,7 +66,37 @@
 
 		<!-- editor configuration -->
 		<script>
+            var xml_src = "";
 			var editor;
+
+            function get_xml_src() {
+                let temp = xml_src;
+                if(xml_src.trim() != "") {
+                    xml_src = "";
+                }
+                return temp;
+            }
+
+            function xml_error(cause, pos, add) {
+                editor.doc.clearGutter("CodeMirror-lint-markers");
+                if(cause == "") return;
+
+                let src = editor.doc.getValue();
+                let line = src.substring(0, pos).split("\n").length;
+                // var msg = document.createElement("div");
+                // var icon = msg.appendChild(document.createElement("span"));
+                // icon.innerHTML = "!!";
+                // icon.className = "lint-error-icon";
+                // msg.appendChild(document.createTextNode(cause + " "+ add));
+                // msg.className = "lint-error";
+                // lint_widgets.push(editor.addLineWidget(line - 1, msg, {coverGutter: false, noHScroll: true}));
+                var marker = document.createElement("div");
+                marker.innerHTML = `<div>⚠️</div>`;
+                //marker.className = "lint-error-icon";
+                marker.setAttribute("title", cause + " " + add);
+                editor.doc.setGutterMarker(line-1, "CodeMirror-lint-markers", marker);
+            }
+
 			window.onload = () => {
 				var sizes = localStorage.getItem('split-sizes')
 				if (sizes) {
@@ -77,6 +112,32 @@
 						localStorage.setItem('split-sizes', JSON.stringify(sizes))
 					}
 				});
+
+                var preview_sizes = localStorage.getItem('preview-split-sizes')
+				if (preview_sizes) {
+					preview_sizes = JSON.parse(preview_sizes)
+				} else {
+					preview_sizes = [50, 50] // default sizes
+				}
+                Split(['#preview_html', '#preview_wasm'], 
+                {
+                    sizes: preview_sizes,
+					gutterSize: 10,
+                    direction: 'vertical',
+                    onDragEnd: function (sizes) {
+						localStorage.setItem('preview-split-sizes', JSON.stringify(sizes))
+					}
+                });
+
+                fetch("druid_xml_bg.wasm")
+                .then( res => res.arrayBuffer() )
+                .then( buff => { window.cached_blob = new Blob([buff], {type:'application/wasm'}); return window.cached_blob } )
+                .then( blob => URL.createObjectURL(blob) )
+                .then( url => wasm_bindgen(url) )
+                .then( wsm => {
+                    window.wasm = wsm;
+                    window.wasm.show_preview("");
+                })
 
                 var basic_widget_spec = {
                     attrs: {
@@ -177,9 +238,13 @@
                         "Ctrl-Space": "autocomplete"
                     },
                     hintOptions: {schemaInfo: tags},
+                    gutters: ["CodeMirror-lint-markers"],
+                    lint: true
                 });
+                editor.doc.setValue( localStorage.getItem('src') || '' );
                 editor.on('change', (inst, change) => {
-                        let src = editor.doc.getValue();
+                        let src = xml_src = editor.doc.getValue();
+                        localStorage.setItem('src', src);
                         src = '<sc'+'ript type="module" src="druid-tag.js"></sc'+'ript>' + src;
                         src = `<style>
                             html,body {width:100%; height:100%; overflow:hidden}
@@ -193,7 +258,7 @@
                             ${src}
                             </body>
                             </html>`;
-                        let preview = document.querySelector("#preview iframe");
+                        let preview = document.querySelector("#preview_iframe");
                         preview.srcdoc = src;
                     }
                 );
@@ -229,10 +294,18 @@
                 <textarea id="code" name="code"></textarea>
             </div>
 			<div id="preview_background">
-				<div id="preview" class="resizable">
-					<iframe id="preview_iframe"></iframe>
-					<div class='resizer'>&nbsp;</div>
+				<div id="preview_html">
+                    <div class="preview resizable">
+                        <iframe id="preview_iframe"></iframe>
+                        <div class='resizer'>&nbsp;</div>
+                    </div>
 				</div>
+                <div id="preview_wasm" class="resizable">
+                    <div class="preview resizable">
+                        <canvas id="canvas"></canvas>
+                        <div class='resizer'>&nbsp;</div>
+                    </div>
+                </div>
 			</div>
 		</div>		
 	</body>
