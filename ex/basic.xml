@@ -1,7 +1,13 @@
-<!-- The top-level element must have a `fn` `lens` element. -->
+<!-- The top-level element must have a `fn`,`lens` attribute. -->
 <!-- `fn` is generated function name. -->
 <!-- `lens` is druid `Lens` type. -->
 <flex fn="build_main" lens="()">
     <label>Hello Druid!</label>
     <button>OK</button>
 </flex>
+
+
+<!-- The above xml code will generate rust code like below. -->
+<!--
+
+-->
