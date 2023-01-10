@@ -9,5 +9,19 @@
 
 <!-- The above xml code will generate rust code like below. -->
 <!--
-
+fn build_main() -> impl druid::Widget<()> {
+        let mut flex = druid::widget::Flex::row();
+        let child = {
+                let mut label = druid::widget::Label::new("Hello Druid!");
+                label
+        };
+        flex.add_child( child );
+        let child = {
+                let mut label = druid::widget::Label::new("OK");
+                let button = druid::widget::Button::from_label(label);
+                button
+        };
+        flex.add_child( child );
+        flex
+}
 -->

@@ -48,6 +48,8 @@
                     target.forEach( t => t.style.pointerEvents = '' );
 					document.documentElement.removeEventListener('mousemove', doDrag, false);    
 					document.documentElement.removeEventListener('mouseup', stopDrag, false);
+                    xml_src = editor.doc.getValue();
+                    loadWasm();
 				}
 			});
 		</script>
@@ -62,6 +64,29 @@
                     .then(text => editor.doc.setValue(text));
                 }
             }
+        </script>
+
+        <!-- Wasm -->
+        <script>
+            function loadWasm() {
+                if(!window.cached_url) {
+                    fetch("druid_xml_bg.wasm")
+                    .then( res => res.arrayBuffer() )
+                    .then( buff => { window.cached_url = URL.createObjectURL( new Blob([buff], {type:'application/wasm'}) ); return window.cached_url } )
+                    .then( url => wasm_bindgen(url) )
+                    .then( wsm => {
+                        window.wasm = wsm;
+                        window.wasm.show_preview("");
+                    })
+                } else {
+                    wasm_bindgen( window.cached_url )
+                    .then( wsm => {
+                        window.wasm = wsm;
+                        window.wasm.show_preview("");
+                    })
+                }
+            }
+            loadWasm();
         </script>
 
 		<!-- editor configuration -->
@@ -80,20 +105,29 @@
             function xml_error(cause, pos, add) {
                 editor.doc.clearGutter("CodeMirror-lint-markers");
                 if(cause == "") return;
+                switch (cause) {
+                    case 'InvalidFlexChildNum' : cause = "flex must have at least one child element."; break;
+                    case 'InvalidSplitChildNum' : cause = "split must have two child element."; break;
+                    case 'InvalidContainerChildNum' : cause = "container must have only one child element."; break;
+                    case 'InvalidScrollChildNum' : cause = "scroll must have only one child element."; break;
+                    case 'CloseWithoutStart' : cause = "close tag not exist"; break;
+                    case 'AttributeRequired' : cause = "attribute("+add+") required"; break;
+                    case 'InvalidAttributeValue' : cause = "attribute value is invalid"; break;
+                    case 'InvalidSizeAttributeValue' : cause = "size attribute value must be ${integer} or ${integer}px"; break;
+                    case 'InvalidBorderAttributeValue' : cause = "border attribute value must be '${integer}(px) solid ${color}'"; break;
+                    case 'CustomWidgetNotExist' : cause = "Custom widget("+add+") not exist"; break;
+                    case 'ChildlessElement' : cause = "there element can't have child"; break;
+                    case 'UnknownAttribute' : cause = "unknown attribute"; break;
+                    case 'InvalidTopElement' : cause = "Not suitable as a top-level element."; break;
+                    case 'CSSSyntaxError' : cause = "css syntax error : "+add; break;
+                    case 'XMLSyntaxError' : cause = "xml syntax error : "+add; break;
+                }
 
                 let src = editor.doc.getValue();
                 let line = src.substring(0, pos).split("\n").length;
-                // var msg = document.createElement("div");
-                // var icon = msg.appendChild(document.createElement("span"));
-                // icon.innerHTML = "!!";
-                // icon.className = "lint-error-icon";
-                // msg.appendChild(document.createTextNode(cause + " "+ add));
-                // msg.className = "lint-error";
-                // lint_widgets.push(editor.addLineWidget(line - 1, msg, {coverGutter: false, noHScroll: true}));
                 var marker = document.createElement("div");
-                marker.innerHTML = `<div>⚠️</div>`;
-                //marker.className = "lint-error-icon";
-                marker.setAttribute("title", cause + " " + add);
+                marker.innerHTML = `<div>❌</div>`;
+                marker.setAttribute("title", cause);
                 editor.doc.setGutterMarker(line-1, "CodeMirror-lint-markers", marker);
             }
 
@@ -128,16 +162,6 @@
 						localStorage.setItem('preview-split-sizes', JSON.stringify(sizes))
 					}
                 });
-
-                fetch("druid_xml_bg.wasm")
-                .then( res => res.arrayBuffer() )
-                .then( buff => { window.cached_blob = new Blob([buff], {type:'application/wasm'}); return window.cached_blob } )
-                .then( blob => URL.createObjectURL(blob) )
-                .then( url => wasm_bindgen(url) )
-                .then( wsm => {
-                    window.wasm = wsm;
-                    window.wasm.show_preview("");
-                })
 
                 var basic_widget_spec = {
                     attrs: {
@@ -241,6 +265,7 @@
                     gutters: ["CodeMirror-lint-markers"],
                     lint: true
                 });
+                editor.setSize(null,"calc(100% - 30px)");
                 editor.doc.setValue( localStorage.getItem('src') || '' );
                 editor.on('change', (inst, change) => {
                         let src = xml_src = editor.doc.getValue();
@@ -250,8 +275,8 @@
                             html,body {width:100%; height:100%; overflow:hidden}
                             
                             flex { display:flex }
-                            flex > * {margin:auto;}
-                            flex[direction="column"] { flex-direction:column }
+                            
+                            flex[direction="column"] { flex-direction:column; align-items: center; }
                             custom { display:none }
                             </style>
                             <body>
