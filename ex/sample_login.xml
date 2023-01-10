@@ -1,0 +1,39 @@
+<style>
+  #login_label { color:aqua; font-size:2.1em }
+  .idpwd_label { width:100px }
+  button {width:100px}
+  button.ok {width:100px; color:yellow}
+  button.cancel {width:100px; color:red}
+</style>
+
+
+<flex direction="column" fn="build_main" lens="LoginInfo" axis_alignment="center">
+  <label id="login_label">LOGIN</label>
+  <spacer/>
+  
+  <!-- ID row -->
+  <flex>
+    <label class="idpwd_label">ID</label>
+    <textbox placeholder="id"/>
+  </flex>
+  
+  <spacer/>
+  
+  <!-- Password row -->
+  <flex>
+    <label class="idpwd_label">Password</label>
+    <textbox placeholder="password"/>
+  </flex>
+  
+  <spacer/>
+  
+  <checkbox>Remeber Me</checkbox>
+  
+  <spacer/>
+
+  <!-- Button row -->
+  <flex style="padding:0px 20px">
+    <button class="ok">OK</button>
+    <button class="cancel">CANCEL</button>
+  </flex>
+</flex>

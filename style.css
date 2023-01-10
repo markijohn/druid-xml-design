@@ -59,7 +59,7 @@ html,body {
 	position: relative;
 }
 
-#preview_iframe {
+.preview_iframe {
 	border : 0px;
 	margin : 0;
 	padding : 0;

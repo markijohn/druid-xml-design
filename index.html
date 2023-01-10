@@ -15,7 +15,7 @@
         <script src="codemirror/addon/hint/xml-hint.js"></script>
         <script src="codemirror/addon/lint/lint.js"></script>
         <script src="codemirror/mode/xml/xml.js"></script>
-        <script src="druid_xml.js"></script>
+        
 
 		<!-- resizable -->
 		<script>
@@ -49,7 +49,7 @@
 					document.documentElement.removeEventListener('mousemove', doDrag, false);    
 					document.documentElement.removeEventListener('mouseup', stopDrag, false);
                     xml_src = editor.doc.getValue();
-                    loadWasm();
+                    //loadWasm();
 				}
 			});
 		</script>
@@ -64,29 +64,6 @@
                     .then(text => editor.doc.setValue(text));
                 }
             }
-        </script>
-
-        <!-- Wasm -->
-        <script>
-            function loadWasm() {
-                if(!window.cached_url) {
-                    fetch("druid_xml_bg.wasm")
-                    .then( res => res.arrayBuffer() )
-                    .then( buff => { window.cached_url = URL.createObjectURL( new Blob([buff], {type:'application/wasm'}) ); return window.cached_url } )
-                    .then( url => wasm_bindgen(url) )
-                    .then( wsm => {
-                        window.wasm = wsm;
-                        window.wasm.show_preview("");
-                    })
-                } else {
-                    wasm_bindgen( window.cached_url )
-                    .then( wsm => {
-                        window.wasm = wsm;
-                        window.wasm.show_preview("");
-                    })
-                }
-            }
-            loadWasm();
         </script>
 
 		<!-- editor configuration -->
@@ -118,6 +95,7 @@
                     case 'CustomWidgetNotExist' : cause = "Custom widget("+add+") not exist"; break;
                     case 'ChildlessElement' : cause = "there element can't have child"; break;
                     case 'UnknownAttribute' : cause = "unknown attribute"; break;
+                    case 'UnknownTag' : cause = "unknown tag("+add+")"; break;
                     case 'InvalidTopElement' : cause = "Not suitable as a top-level element."; break;
                     case 'CSSSyntaxError' : cause = "css syntax error : "+add; break;
                     case 'XMLSyntaxError' : cause = "xml syntax error : "+add; break;
@@ -270,9 +248,11 @@
                 editor.on('change', (inst, change) => {
                         let src = xml_src = editor.doc.getValue();
                         localStorage.setItem('src', src);
+
+                        //preview html
                         src = '<sc'+'ript type="module" src="druid-tag.js"></sc'+'ript>' + src;
                         src = `<style>
-                            html,body {width:100%; height:100%; overflow:hidden}
+                            html,body {margin:0; width:100%; height:100%; overflow:hidden}
                             
                             flex { display:flex }
                             
@@ -283,8 +263,54 @@
                             ${src}
                             </body>
                             </html>`;
-                        let preview = document.querySelector("#preview_iframe");
-                        preview.srcdoc = src;
+                        document.querySelector("#preview_html .preview_iframe").srcdoc = src;
+
+                        //preview wasm
+                        //Why not reuse canvas. 
+                        //Druid adds event listeners to document but does not remove them. 
+                        //Originally, the canvas was maintained without an iframe and only wasm was reloaded, 
+                        //but the problem of duplicating and calling events occurred due to a problem without event removal. (e.g. key call event is called more than once)
+                        let wasm_iframe = document.querySelector("#preview_wasm .preview_iframe");
+                        if(wasm_iframe.srcdoc == '') {
+                            src = 
+                            '<sc'+'ript src="druid_xml.js"></sc'+'ript>'+
+                            '<sc'+'ript>'+`
+                                window.get_xml_src = parent.get_xml_src;
+                                window.xml_error = parent.xml_error;
+                                window.onload = function() {
+                                    if(!parent.window.cached_blob) {
+                                        fetch("druid_xml_bg.wasm")
+                                        .then( res => res.arrayBuffer() )
+                                        .then( buff => { parent.window.cached_blob = new Blob([buff], {type:'application/wasm'}); return parent.window.cached_blob } )
+                                        .then( blob => wasm_bindgen( URL.createObjectURL( blob ) ) )
+                                        .then( wasm => {
+                                            window.wasm = wasm;
+                                            wasm.show_preview();
+                                        })
+                                    } else {
+                                        wasm_bindgen( URL.createObjectURL( parent.window.cached_blob ) )
+                                        .then( wasm => {
+                                            window.wasm = wasm;
+                                            wasm.show_preview();
+                                        })
+                                    }
+                                }
+                            `+'</sc'+'ript>';
+                            src = `
+                            <html>
+                            <head>
+                                <style>
+                                html,body {margin:0; width:100%; height:100%; overflow:hidden}
+                                #canvas {width:100%; height:100%}
+                                </style>
+                                ${src}
+                            </head>
+                            <body>
+                                <canvas id="canvas"></canvas>
+                            </body>
+                            </html>`;
+                            wasm_iframe.srcdoc = src;
+                        }
                     }
                 );
 			}
@@ -303,16 +329,15 @@
                     </optgroup>
                     <optgroup label="Custom Widget">
                         <option value="ex/custom_widget.xml">Custom widget</option>
-                        <option value="ex/custom_widget_native.rs">Custom widget native</option>
+                        <option value="ex/custom_widget_native.xml">Custom widget native</option>
                     </optgroup>
-                    <optgroup label="Drawable Widget">
-                        <option value="ex/drawable_shapes.xml">Draw shape</option>
-                        <option value="ex/drawable_background.xml">Drawable as background</option>
+                    <optgroup label="Drawable Widget (Not yet)">
+                        <option value="ex/drawable_shapes.xml">Draw shape (Not yet)</option>
+                        <option value="ex/drawable_background.xml">Drawable as background (Not yet)</option>
                     </optgroup>
                     <optgroup label="Sample form">
                         <option value="ex/sample_login.xml">Login form</option>
                         <option value="ex/sample_input.xml">Input form</option>
-                        <option value="ex/sample_file_explorer.xml">File explore form</option>
                     </optgroup>
                 </select>
                 <label style="color:lightgray">Ctrl+Space show the hint</label>
@@ -321,13 +346,13 @@
 			<div id="preview_background">
 				<div id="preview_html">
                     <div class="preview resizable">
-                        <iframe id="preview_iframe"></iframe>
+                        <iframe class="preview_iframe"></iframe>
                         <div class='resizer'>&nbsp;</div>
                     </div>
 				</div>
                 <div id="preview_wasm" class="resizable">
                     <div class="preview resizable">
-                        <canvas id="canvas"></canvas>
+                        <iframe class="preview_iframe"></iframe>
                         <div class='resizer'>&nbsp;</div>
                     </div>
                 </div>

@@ -1,0 +1,19 @@
+
+<flex direction="column" fn="build_main">
+    <widget fn="demo_custom_widget" style="border:3px solid yellow; width:200px; height:300px" />
+</flex>
+
+<!--
+//rust code
+fn main() {
+    fn demo_custom_widget() -> Box<dyn Widget<()>> {
+        /// implement custom widget
+    }
+
+    druid_xml!(
+        r#"<flex direction="column" fn="build_main">
+            <widget fn="demo_custom_widget" />
+        </flex>"#;
+    );
+}
+-->

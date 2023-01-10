@@ -1,5 +1,5 @@
 <style>
-.wrap_border { border:2px solid cyan; width:200px; height:50px; }
+.wrap_border { padding:10; border:5px solid cyan; width:200px; height:50px; }
 </style>
 
 <flex fn="my_custom">
@@ -9,7 +9,7 @@
 
 <flex direction="column" fn="build_main">
   	<!-- map custom widget -->
-    <widget fn="my_custom"/>
+    <widget fn="my_custom" />
   
   	<!-- custom widget with style -->
   	<widget fn="my_custom" class="wrap_border"/>
