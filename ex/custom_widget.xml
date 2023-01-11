@@ -3,14 +3,22 @@
 </style>
 
 <flex fn="my_custom">
-    <label>Label</label>
-    <textbox/>
+  <label>Label</label>
+  <textbox/>
 </flex>
 
-<flex direction="column" fn="build_main">
-  	<!-- map custom widget -->
-    <widget fn="my_custom" />
+<flex fn="my_custom_param">
+  <label>${name}</label>
+  <textbox placeholder="${placeholder}"/>
+</flex>
+
+<flex direction="column" fn="build_main" must_fill_main_axis="true" axis_alignment="spaceevenly">
+  <!-- map custom widget -->
+  <my_custom/>
+
+  <!-- custom widget with style -->
+  <my_custom class="wrap_border"/>
   
-  	<!-- custom widget with style -->
-  	<widget fn="my_custom" class="wrap_border"/>
+  <!-- custom widget with parameter -->
+  <my_custom_param name="MyName" placeholder="Input here..."/>
 </flex>

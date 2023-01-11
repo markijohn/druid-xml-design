@@ -92,7 +92,6 @@
                     case 'InvalidAttributeValue' : cause = "attribute value is invalid"; break;
                     case 'InvalidSizeAttributeValue' : cause = "size attribute value must be ${integer} or ${integer}px"; break;
                     case 'InvalidBorderAttributeValue' : cause = "border attribute value must be '${integer}(px) solid ${color}'"; break;
-                    case 'CustomWidgetNotExist' : cause = "Custom widget("+add+") not exist"; break;
                     case 'ChildlessElement' : cause = "there element can't have child"; break;
                     case 'UnknownAttribute' : cause = "unknown attribute"; break;
                     case 'UnknownTag' : cause = "unknown tag("+add+")"; break;
@@ -131,7 +130,7 @@
 				} else {
 					preview_sizes = [50, 50] // default sizes
 				}
-                Split(['#preview_html', '#preview_wasm'], 
+                Split(['#preview_wasm','#preview_html'], 
                 {
                     sizes: preview_sizes,
 					gutterSize: 10,
@@ -161,9 +160,10 @@
                     },
                     flex: {
                         attrs: {
+                            must_fill_main_axis : [true,false],
                             direction : ["row","column"],
-                            axis_alignment : [],
-                            cross_axis_alignment : []
+                            axis_alignment : ["start","center","end","spacebetween","spaceevenly","spacearound"],
+                            cross_axis_alignment : ["start","center","end","baseline"],
                         },
                         children: ["spacer"].concat(basic_widgets)
                     },
@@ -337,25 +337,25 @@
                     </optgroup>
                     <optgroup label="Sample form">
                         <option value="ex/sample_login.xml">Login form</option>
-                        <option value="ex/sample_input.xml">Input form</option>
+                        <option value="ex/sample_split.xml">Split</option>
                     </optgroup>
                 </select>
                 <label style="color:lightgray">Ctrl+Space show the hint</label>
                 <textarea id="code" name="code"></textarea>
             </div>
 			<div id="preview_background">
+                <div id="preview_wasm">
+                    <div class="preview resizable">
+                        <iframe class="preview_iframe"></iframe>
+                        <div class='resizer'>&nbsp;</div>
+                    </div>
+                </div>
 				<div id="preview_html">
                     <div class="preview resizable">
                         <iframe class="preview_iframe"></iframe>
                         <div class='resizer'>&nbsp;</div>
                     </div>
 				</div>
-                <div id="preview_wasm" class="resizable">
-                    <div class="preview resizable">
-                        <iframe class="preview_iframe"></iframe>
-                        <div class='resizer'>&nbsp;</div>
-                    </div>
-                </div>
 			</div>
 		</div>		
 	</body>
