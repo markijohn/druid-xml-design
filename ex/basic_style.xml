@@ -11,7 +11,7 @@
 button { font-size:24px }
 </style>
 
-<flex direction="column" fn="build_main">
+<flex direction="column" fn="build_main" lens="()">
     <label class="one">One</label>
     <label class="one">Two</label>
     <label class="two">Three</label>

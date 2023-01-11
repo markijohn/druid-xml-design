@@ -5,7 +5,7 @@ label { color:black; font-size:16px }
 #my_special_label { color:cyan; font-soze:24px }
 </style>
 
-<flex direction="column" fn="build_main">
+<flex direction="column" fn="build_main" lens="()">
     <!-- specific element style 1st order -->
     <label class="my_label" style="color:blue; font-size:1.6em">Specific Style</label>
 
