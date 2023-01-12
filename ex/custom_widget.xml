@@ -58,7 +58,6 @@ pub fn main() {
         
           <my_custom class="wrap_border"/>
           
-          <!-- custom widget with parameter -->
           <my_custom_param name="MyName" placeholder="Input here..."/>
         </flex>
         "#
