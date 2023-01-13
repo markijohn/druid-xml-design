@@ -130,15 +130,30 @@
 				} else {
 					preview_sizes = [50, 50] // default sizes
 				}
-                Split(['#preview_wasm','#preview_html'], 
-                {
-                    sizes: preview_sizes,
-					gutterSize: 10,
-                    direction: 'vertical',
-                    onDragEnd: function (sizes) {
-						localStorage.setItem('preview-split-sizes', JSON.stringify(sizes))
-					}
+
+                let htmlview = document.querySelector("#htmlview");
+                htmlview.addEventListener('change', () => {
+                    localStorage.setItem("htmlview",htmlview.checked);
+                    location.reload();
                 });
+
+                if( localStorage.getItem("htmlview") == "true" ) {
+                    htmlview.checked = true;
+                    Split(['#preview_wasm','#preview_html'], 
+                    {
+                        sizes: preview_sizes,
+                        gutterSize: 10,
+                        direction: 'vertical',
+                        onDragEnd: function (sizes) {
+                            localStorage.setItem('preview-split-sizes', JSON.stringify(sizes))
+                        }
+                    });
+                } else {
+                    htmlview.value = false;
+                    document.querySelector("#preview_wasm").style.height = "100%";
+                    document.querySelector("#preview_html").remove();
+                }
+                
 
                 var basic_widget_spec = {
                     attrs: {
@@ -172,7 +187,10 @@
                         },
                         children: basic_widgets
                     },
-                    label: basic_widget_spec,
+                    label: {
+                        attrs : {"line_break" : [true,false]},
+                        children : []
+                    },
                     button: basic_widget_spec,
                     textbox: {
                         attrs : {
@@ -243,27 +261,29 @@
                     gutters: ["CodeMirror-lint-markers"],
                     lint: true
                 });
-                editor.setSize(null,"calc(100% - 30px)");
+                editor.setSize(null,"calc(100% - 60px)");
                 editor.doc.setValue( localStorage.getItem('src') || '' );
                 editor.on('change', (inst, change) => {
                         let src = xml_src = editor.doc.getValue();
                         localStorage.setItem('src', src);
 
                         //preview html
-                        src = '<sc'+'ript type="module" src="druid-tag.js"></sc'+'ript>' + src;
-                        src = `<style>
-                            html,body {margin:0; width:100%; height:100%; overflow:hidden}
-                            
-                            flex { display:flex }
-                            
-                            flex[direction="column"] { flex-direction:column; align-items: center; }
-                            custom { display:none }
-                            </style>
-                            <body>
-                            ${src}
-                            </body>
-                            </html>`;
-                        document.querySelector("#preview_html .preview_iframe").srcdoc = src;
+                        if(localStorage.getItem("htmlview") == "true") {
+                            src = '<sc'+'ript type="module" src="druid-tag.js"></sc'+'ript>' + src;
+                            src = `<style>
+                                html,body {margin:0; width:100%; height:100%; overflow:hidden}
+                                
+                                flex { display:flex }
+                                
+                                flex[direction="column"] { flex-direction:column; align-items: center; }
+                                custom { display:none }
+                                </style>
+                                <body>
+                                ${src}
+                                </body>
+                                </html>`;
+                            document.querySelector("#preview_html .preview_iframe").srcdoc = src;
+                        }
 
                         //preview wasm
                         //Why not reuse canvas. 
@@ -341,8 +361,9 @@
                         <option value="ex/sample_devtools.xml">DevTools</option>
                     </optgroup>
                 </select>
-                <label style="color:lightgray">Ctrl+Space show the hint</label>
+                <input type="checkbox" id="htmlview"/>HTMLView
                 <textarea id="code" name="code"></textarea>
+                <label style="color:lightgray">Ctrl+Space show the hint</label>
             </div>
 			<div id="preview_background">
                 <div id="preview_wasm">
